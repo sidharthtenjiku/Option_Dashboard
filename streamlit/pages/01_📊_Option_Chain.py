@@ -570,13 +570,15 @@ with st.sidebar:
     STRIKECOUNT = st.number_input("Strikecount (± per side, max 50)", min_value=1, max_value=10, value=1, step=1)
 
     #! Parameter -> 4 : Refresh interval
-    REFRESH_MS = st.number_input("Refresh interval (ms)", min_value=5000, max_value=60000, value=5000, step=2000)
+    # REFRESH_MS = st.number_input("Refresh interval (ms)", min_value=30_000, max_value=3_00_000, value=30_000, step=30_000)
+    refresh_sec = st.number_input("Refresh interval (seconds)",min_value=30,max_value=300,value=30,step=30)
 
     #! Caption
     st.divider()
     st.caption("ATM is computed from underlying LTP of the same symbol via ClickHouse.")
 
 #! ------------ Autorefresh ------------
+REFRESH_MS = refresh_sec * 1000
 st_autorefresh(interval=REFRESH_MS, key="_live_oc_refresh")
 
 
