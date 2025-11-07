@@ -6,12 +6,17 @@ import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 from clickhouse_connect import get_client
 from truedata.analytics import TD_analytics
+import logging
+import importlib.util
+import sys
+from pathlib import Path
+import numpy as np
 
 import warnings
 warnings.filterwarnings("ignore")
 IST = pytz.timezone("Asia/Kolkata")
 
-#! MASTER FUNCTIONS
+#! ================== MASTER FUNCTIONS ==================
 
 def add_oi_trigger(df, threshold_percent=10, threshold_absolute=1000):
     """
@@ -345,16 +350,134 @@ def get_master_features( underlying, start_date, expiry=None, limit=None, latest
 
     return df
 
-#! ------------ UI ------------
+def _fetch_iv_by_expiry_today(conn,SYMBOL,td_analytics_obj):
+
+    today = datetime.date.today().isoformat()
+
+    #! 1. Get all rows for today and SYMBOL
+    q = '''
+        SELECT snap_minute_ist, expiry, strike, side, iv
+        FROM option_chain_1m
+        WHERE underlying = %(symbol)s
+          AND toDate(snap_minute_ist) = %(today)s
+        ORDER BY expiry, snap_minute_ist, strike
+    '''
+    rows = list(conn.query(q, parameters={"symbol": SYMBOL, "today": today}).named_results())
+    if not rows:
+        return pd.DataFrame(columns=["time","expiry_ts","expiry_str","tenor_tag","atm_strike","ce_iv","pe_iv","iv_avg"])
+    df = pd.DataFrame(rows)
+    df['expiry_str'] = df['expiry'].astype(str)
+    df['expiry_ts'] = pd.to_datetime(df['expiry']).astype(int) // 10**9
+
+    #! 2. Find the two nearest expiries (sorted ascending)
+    expiry_dates = sorted(df['expiry'].unique())
+    if len(expiry_dates) < 1:
+        return pd.DataFrame(columns=["time","expiry_ts","expiry_str","tenor_tag","atm_strike","ce_iv","pe_iv","iv_avg"])
+    near_expiry = expiry_dates[0]
+    near_dt = pd.to_datetime(near_expiry)
+    # Find all expiries in the next month after near expiry's month
+    far_month_expiries = [e for e in expiry_dates if (pd.to_datetime(e).year > near_dt.year) or (pd.to_datetime(e).year == near_dt.year and pd.to_datetime(e).month == near_dt.month + 1)]
+    if far_month_expiries:
+        far_month = pd.to_datetime(far_month_expiries[0]).month
+        far_year = pd.to_datetime(far_month_expiries[0]).year
+        # Get all expiries in that month
+        far_expiries_in_month = [e for e in expiry_dates if pd.to_datetime(e).year == far_year and pd.to_datetime(e).month == far_month]
+        far_expiry = max(far_expiries_in_month)
+        expiry_map = {near_expiry: 'near', far_expiry: 'far'}
+    else:
+        expiry_map = {near_expiry: 'near'}
+
+    #! 3. Get spot LTP and strike step for ATM calculation
+    ul_ltp = float(td_analytics_obj.get_spot_ltp(SYMBOL).LTP.iloc[0])
+    strike_step = get_strike_step(SYMBOL)
+
+    #! 4. For each expiry, for each minute, get ATM strike and IVs
+    out_rows = []
+    for expiry, tenor_tag in expiry_map.items():
+        df_exp = df[df['expiry'] == expiry].copy()
+        # For each minute
+        for minute, group in df_exp.groupby(df_exp['snap_minute_ist']):
+            # Find ATM strike for this minute
+            strikes = group['strike'].unique()
+            if len(strikes) == 0:
+                continue
+            # ATM = closest to ul_ltp, snapped to strike step
+            atm_strike = min(strikes, key=lambda s: abs(float(s) - ul_ltp))
+            # Get CE/PE IVs for ATM
+            ce_iv = group[(group['strike'] == atm_strike) & (group['side'] == 'C')]['iv']
+            pe_iv = group[(group['strike'] == atm_strike) & (group['side'] == 'P')]['iv']
+            ce_iv = float(ce_iv.iloc[0]) if not ce_iv.empty else None
+            pe_iv = float(pe_iv.iloc[0]) if not pe_iv.empty else None
+            iv_avg = 0.5 * (ce_iv + pe_iv) if ce_iv is not None and pe_iv is not None else None
+            out_rows.append({
+                'time': pd.to_datetime(minute).strftime('%H:%M'),
+                'expiry_ts': int(pd.to_datetime(expiry).timestamp()),
+                'expiry_str': str(expiry),
+                'tenor_tag': tenor_tag,
+                'atm_strike': atm_strike,
+                'ce_iv': ce_iv,
+                'pe_iv': pe_iv,
+                'iv_avg': iv_avg
+            })
+    out_df = pd.DataFrame(out_rows)
+    out_df[['ce_iv', 'pe_iv', 'iv_avg']] = out_df[['ce_iv', 'pe_iv', 'iv_avg']] * 100
+    return out_df.sort_values(['time','tenor_tag']).reset_index(drop=True)
+
+def _compute_vix30(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty: return df
+    today = datetime.datetime.now(IST).date()
+    df = df.copy()
+    df["t_dt"] = pd.to_datetime(df["time"], format="%H:%M").map(lambda t: datetime.datetime.combine(today, t.time(), tzinfo=IST))
+    df["expiry_dt"] = pd.to_datetime(df["expiry_ts"], unit="s", utc=True).dt.tz_convert(IST)
+
+    out = []
+    T30 = 30.0/365.0
+    for t, blk in df.groupby("t_dt", sort=True):
+        blk = blk.copy()
+        blk["days_left"] = (blk["expiry_dt"] - t).dt.total_seconds()/86400.0
+        near = blk[blk["days_left"].between(0, 30, inclusive="left")].sort_values("days_left").head(1)
+        far  = blk[blk["days_left"] >= 30].sort_values("days_left").head(1)
+
+        vix = None
+        if not near.empty and not far.empty:
+            iv1 = float(near["iv_avg"].iloc[0]) / 100.0
+            iv2 = float(far["iv_avg"].iloc[0])  / 100.0
+            T1  = float(near["days_left"].iloc[0]) / 365.0
+            T2  = float(far["days_left"].iloc[0])  / 365.0
+            V1, V2 = iv1*iv1*T1, iv2*iv2*T2
+            w1 = (T2 - T30) / (T2 - T1) if T2 != T1 else 1.0
+            V30 = w1*V1 + (1.0 - w1)*V2
+            vix = 100.0*np.sqrt(V30 / T30)
+        else:
+            use = near if not near.empty else (far if not far.empty else None)
+            if use is not None and not use.empty:
+                iv = float(use["iv_avg"].iloc[0]) / 100.0
+                T  = float(use["days_left"].iloc[0]) / 365.0
+                if T > 0:
+                    vix = 100.0 * iv * np.sqrt(T / T30)
+
+        if vix is not None:
+            out.append({"t_dt": t, "time": t.strftime("%H:%M"), "vix30": round(float(vix), 2)})
+
+    print(
+        f"{t:%H:%M} near_iv%={near['iv_avg'].iloc[0]:.2f} "
+        f"near_days={near['days_left'].iloc[0]:.1f}  "
+        f"far_iv%={(far['iv_avg'].iloc[0] if not far.empty else float('nan')):.2f} "
+        f"far_days={(far['days_left'].iloc[0] if not far.empty else float('nan')):.1f}"
+    )
+
+    return pd.DataFrame(out).sort_values("t_dt")
+
+#! ================== UI ==================
 
 st.set_page_config(page_title="📊 Option Chain (Live)", layout="wide")
 st.title("📊 Option Chain — Live")
 
-#! ------------ Set (by default) -- universe:index | index_choice:NIFTY | stock_choice:RELIANCE ------------
+#! ================== Set (by default) -- universe:index | index_choice:NIFTY | stock_choice:RELIANCE ==================
 
 ensure_session_defaults()
 
-#! ------------ ClickHouse connection check ------------
+#! ================== ClickHouse connection check ==================
 
 if "clickhouse_conn" not in st.session_state or st.session_state.get("clickhouse_status") != "connected":
     st.warning("Go to Home and connect to ClickHouse first.")
@@ -372,6 +495,12 @@ def get_clickhouse_conn():
 
 conn = get_clickhouse_conn()
 
+#! ================== TrueData Analytics connection ==================
+td_username = "True9030"
+td_password = "vineet@9030"
+td_log_level = logging.WARNING
+
+td_analytics_obj = TD_analytics(td_username, td_password, log_level=td_log_level)
 
 #! ------------ Left Bar ------------
 
@@ -486,15 +615,27 @@ else:
     as_on_time = "N/A"
 
 #! Metrics Row Above Option Chain
+call_oi_total = df_oc[df_oc['side'] == 'C']['oi'].sum()
+put_oi_total = df_oc[df_oc['side'] == 'P']['oi'].sum()
+
+try:
+    rows = _fetch_iv_by_expiry_today(conn, SYMBOL, td_analytics_obj)
+    if not rows.empty:
+        vixdf = _compute_vix30(rows)
+except Exception as e:
+    vixdf = pd.DataFrame()
+
+india_vix = vixdf['vix30'].iloc[-1] if not vixdf.empty and 'vix30' in vixdf.columns else None
+
 col_a, col_b, col_c, col_d, col_e = st.columns(5)
 with col_a:
     st.metric("Underlying LTP", f"{ul_ltp:.2f}")
 with col_b:
     st.metric("ATM Strike", f"{atm_strike}")
 with col_c:
-    st.metric("PCR (Total)", "")
+    st.metric("PCR (total)", f"{(put_oi_total / call_oi_total):.2f}" if call_oi_total else "—")
 with col_d:
-    st.metric("India VIX", "")
+    st.metric("India VIX", f"{india_vix:.2f}" if india_vix is not None else "N/A")
 with col_e:
     st.metric("As On", as_on_time)
 
