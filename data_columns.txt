@@ -1,0 +1,90 @@
+option_chain : 
+    timestamp_ist
+    underlying
+    expiry
+    strike
+    side
+    ltp
+    bid_price
+    ask_price
+    volume
+    oi
+    prev_oi
+    delta
+    iv
+    theta
+    vega
+    gamma
+    rho
+    oi_change
+    oi_change_perc
+trigger:
+    oi_trigger : 
+        HIGH_OI_BUILDUP
+        HIGH_OI_UNWIND
+        NORMAL
+        OI_BUILDUP
+        OI_UNWIND
+trap:
+    oi_trap:
+        Call Writers Trap
+        Call Writers Trap-Pentry
+        Call Writers Trap-Pexit
+        No Trap
+        Put Writers Trap
+        Put Writers Trap-Pentry
+        Put Writers Trap-Pexit
+delta:
+    delta_change
+    delta_change_perc
+    delta_velocity
+    delta_momentum
+Vix:
+    date
+    time
+    instrument
+    vix30
+Fii/Dii:
+    Date
+    CLIENT_TYPE:
+        Client
+        Dii
+        Fii
+        Pro
+    Future Index Long
+    Future Index Short
+    Future Stock Long
+    Future Stock Short
+    Option Index Call Long
+    Option Index Put Long
+    Option Index Call Short
+    Option Index Put Short
+    Option Stock Call Long
+    Option Stock Put Long
+    Option Stock Call Short
+    Option Stock Put Short
+    Net Buy/Sell Index Futures
+    Net Buy/Sell Stock Futures
+    Net Buy/Sell Index Call
+    Net Buy/Sell Index Put
+    Net Buy/Sell Stock Call
+    Net Buy/Sell Stock Put
+    Total Positions carried Today Index Futures
+    Total Positions carried 1 Day Ago Index Futures
+    Total Positions carried 2 Days Ago Index Futures
+    Total Positions carried Today Stock Futures
+    Total Positions carried 1 Day Ago Stock Futures
+    Total Positions carried 2 Days Ago Stock Futures
+    Total Positions carried Today Index Call
+    Total Positions carried 1 Day Ago Index Call
+    Total Positions carried 2 Days Ago Index Call
+    Total Positions carried Today Index Put
+    Total Positions carried 1 Day Ago Index Put
+    Total Positions carried 2 Days Ago Index Put
+    Total Positions carried Today Stock Call
+    Total Positions carried 1 Day Ago Stock Call
+    Total Positions carried 2 Days Ago Stock Call
+    Total Positions carried Today Stock Put
+    Total Positions carried 1 Day Ago Stock Put
+    Total Positions carried 2 Days Ago Stock Put
+
