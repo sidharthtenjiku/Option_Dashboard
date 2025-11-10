@@ -1,0 +1,44 @@
+Folder PATH listing for volume Win 11 SSD
+Volume serial number is 7A67-014E
+C:\USERS\ISER\DESKTOP\AI_ML DATASET
+�   dataset.ipynb
+�   data_columns.txt
+�   final_dataset.ipynb
+�   requirements.txt
+�   
++---fii_dii
+�   �   1_getting_nse_raw_participants.py
+�   �   2_create_net_output.py
+�   �   3_streamlit_app.py
+�   �   config.py
+�   �   
+�   +---data
+�   �       1_participants_raw_oi_nse.csv
+�   �       2_net_output_oi_data.csv
+�   �       
+�   +---__pycache__
+�           config.cpython-313.pyc
+�           
++---rough_sample_tables
+�       dataset.csv
+�       
++---streamlit_app
+�   �   config.py
+�   �   helpers.py
+�   �   Main.py
+�   �   
+�   +---pages
+�   �   �   01_📊_Option_Chain.py
+�   �   �   02_💰_FII_DII.py
+�   �   �   03_🚨_VIX.py
+�   �   �   
+�   �   +---__pycache__
+�   �           03_??_VIX.cpython-313.pyc
+�   �           
+�   +---__pycache__
+�           config.cpython-313.pyc
+�           helpers.cpython-313.pyc
+�           
++---vix
+        vix.ipynb
+        

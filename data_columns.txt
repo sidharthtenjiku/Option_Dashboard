@@ -45,46 +45,72 @@ Vix:
     instrument
     vix30
 Fii/Dii:
-    Date
-    CLIENT_TYPE:
-        Client
-        Dii
-        Fii
-        Pro
-    Future Index Long
-    Future Index Short
-    Future Stock Long
-    Future Stock Short
-    Option Index Call Long
-    Option Index Put Long
-    Option Index Call Short
-    Option Index Put Short
-    Option Stock Call Long
-    Option Stock Put Long
-    Option Stock Call Short
-    Option Stock Put Short
-    Net Buy/Sell Index Futures
-    Net Buy/Sell Stock Futures
-    Net Buy/Sell Index Call
-    Net Buy/Sell Index Put
-    Net Buy/Sell Stock Call
-    Net Buy/Sell Stock Put
-    Total Positions carried Today Index Futures
-    Total Positions carried 1 Day Ago Index Futures
-    Total Positions carried 2 Days Ago Index Futures
-    Total Positions carried Today Stock Futures
-    Total Positions carried 1 Day Ago Stock Futures
-    Total Positions carried 2 Days Ago Stock Futures
-    Total Positions carried Today Index Call
-    Total Positions carried 1 Day Ago Index Call
-    Total Positions carried 2 Days Ago Index Call
-    Total Positions carried Today Index Put
-    Total Positions carried 1 Day Ago Index Put
-    Total Positions carried 2 Days Ago Index Put
-    Total Positions carried Today Stock Call
-    Total Positions carried 1 Day Ago Stock Call
-    Total Positions carried 2 Days Ago Stock Call
-    Total Positions carried Today Stock Put
-    Total Positions carried 1 Day Ago Stock Put
-    Total Positions carried 2 Days Ago Stock Put
+    Date, 
+    CLIENT_TYPE,
+    Future Index Long, 
+    Future Index Short, 
+    Future Stock Long, 
+    Future Stock Short,
+    Option Index Call Long,
+    Option Index Put Long,
+    Option Index Call Short,
+    Option Index Put Short,
+    Option Stock Call Long,
+    Option Stock Put Long,
+    Option Stock Call Short,
+    Option Stock Put Short,
+    Net Buy/Sell Index Futures,
+    Net Buy/Sell Stock Futures,
+    Net Buy/Sell Index Call,
+    Net Buy/Sell Index Put,
+    Net Buy/Sell Stock Call,
+    Net Buy/Sell Stock Put,
+    Total Positions carried Today Index Futures,
+    Total Positions carried 1 Day Ago Index Futures,
+    Total Positions carried 2 Days Ago Index Futures,
+    Total Positions carried 3 Days Ago Index Futures,
+    Total Positions carried 4 Days Ago Index Futures,
+    Total Positions carried 5 Days Ago Index Futures,
+    Total Positions carried 6 Days Ago Index Futures,
+    Total Positions carried 7 Days Ago Index Futures,
+    Total Positions carried Today Stock Futures,
+    Total Positions carried 1 Day Ago Stock Futures,
+    Total Positions carried 2 Days Ago Stock Futures,
+    Total Positions carried 3 Days Ago Stock Futures,
+    Total Positions carried 4 Days Ago Stock Futures,
+    Total Positions carried 5 Days Ago Stock Futures,
+    Total Positions carried 6 Days Ago Stock Futures,
+    Total Positions carried 7 Days Ago Stock Futures,
+    Total Positions carried Today Index Call,
+    Total Positions carried 1 Day Ago Index Call,
+    Total Positions carried 2 Days Ago Index Call,
+    Total Positions carried 3 Days Ago Index Call,
+    Total Positions carried 4 Days Ago Index Call,
+    Total Positions carried 5 Days Ago Index Call,
+    Total Positions carried 6 Days Ago Index Call,
+    Total Positions carried 7 Days Ago Index Call,
+    Total Positions carried Today Index Put,
+    Total Positions carried 1 Day Ago Index Put,
+    Total Positions carried 2 Days Ago Index Put,
+    Total Positions carried 3 Days Ago Index Put,
+    Total Positions carried 4 Days Ago Index Put,
+    Total Positions carried 5 Days Ago Index Put,
+    Total Positions carried 6 Days Ago Index Put,
+    Total Positions carried 7 Days Ago Index Put,
+    Total Positions carried Today Stock Call,
+    Total Positions carried 1 Day Ago Stock Call,
+    Total Positions carried 2 Days Ago Stock Call,
+    Total Positions carried 3 Days Ago Stock Call,
+    Total Positions carried 4 Days Ago Stock Call,
+    Total Positions carried 5 Days Ago Stock Call,
+    Total Positions carried 6 Days Ago Stock Call,
+    Total Positions carried 7 Days Ago Stock Call,
+    Total Positions carried Today Stock Put,
+    Total Positions carried 1 Day Ago Stock Put,
+    Total Positions carried 2 Days Ago Stock Put,
+    Total Positions carried 3 Days Ago Stock Put,
+    Total Positions carried 4 Days Ago Stock Put,
+    Total Positions carried 5 Days Ago Stock Put,
+    Total Positions carried 6 Days Ago Stock Put,
+    Total Positions carried 7 Days Ago Stock Put,
 
