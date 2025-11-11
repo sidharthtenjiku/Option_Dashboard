@@ -14,3 +14,6 @@ database = "market"
 td_username = "True9030"
 td_password = "vineet@9030"
 td_log_level = logging.WARNING
+
+#! FII DII data paths
+path_fiidii_data_files = "C:\\Users\\ISer\\Desktop\\ai_ml dataset\\fii_dii"  

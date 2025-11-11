@@ -12,8 +12,6 @@ import json
 import os
 import streamlit as st
 from pathlib import Path
-import upstox_client
-from upstox_client.rest import ApiException
 from clickhouse_connect import get_client
 from truedata import TD_live
 from truedata.analytics import TD_analytics

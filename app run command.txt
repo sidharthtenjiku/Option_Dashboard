@@ -1,0 +1,10 @@
+### Run Command ###
+cd C:\\siddharth\\ai_ml dataset
+env_ai_ml_dataset\Scripts\activate
+cd streamlit_app
+streamlit run Main.py --server.port 8502 --server.address 0.0.0.0
+
+### Link for local (server), public(with same internet connection), public(with different internet connection using talescale) ###
+http://localhost:8502/
+http://192.168.1.18:8502/
+http://100.87.242.51:8502/

@@ -12,7 +12,7 @@ from clickhouse_connect import get_client
 from truedata.analytics import TD_analytics
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from config import host, port, username, password, database
+from config import host, port, username, password, database, path_fiidii_data_files
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -20,9 +20,9 @@ IST = pytz.timezone("Asia/Kolkata")
 
 #! ================== PATHS (for FII DII data) ==================
 
-PATH_DATA_FILES = os.path.join('C:\\Users\\ISer\\Desktop\\ai_ml dataset\\fii_dii', 'data')
-PATH_RAW_FILE = os.path.join(PATH_DATA_FILES, '1_participants_raw_oi_nse.csv')
-PATH_OUTPUT_FILE = os.path.join(PATH_DATA_FILES, '2_net_output_oi_data.csv')
+PATH_FIIDII_DATA_FILES = os.path.join(path_fiidii_data_files, 'data')
+PATH_RAW_FILE = os.path.join(PATH_FIIDII_DATA_FILES, '1_participants_raw_oi_nse.csv')
+PATH_OUTPUT_FILE = os.path.join(PATH_FIIDII_DATA_FILES, '2_net_output_oi_data.csv')
 
 #! ================== FUNCTIONS ==================
 
