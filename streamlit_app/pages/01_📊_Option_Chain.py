@@ -1,4 +1,4 @@
-from helpers import *
+from helpers import get_clickhouse_conn, ensure_session_defaults, get_strike_step
 import datetime
 import pytz
 import pandas as pd
@@ -11,6 +11,7 @@ import importlib.util
 import sys
 from pathlib import Path
 import numpy as np
+from config import host, port, username, password, database, td_username, td_password, td_log_level
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -483,23 +484,9 @@ if "clickhouse_conn" not in st.session_state or st.session_state.get("clickhouse
     st.warning("Go to Home and connect to ClickHouse first.")
     st.stop()
 
-
-def get_clickhouse_conn():
-    return get_client(
-        host="localhost",
-        port=8123,
-        username="ingest_w",
-        password="ingest_secret",
-        database="market"
-    )
-
-conn = get_clickhouse_conn()
+conn = get_clickhouse_conn(host, port, username, password, database)
 
 #! ================== TrueData Analytics connection ==================
-td_username = "True9030"
-td_password = "vineet@9030"
-td_log_level = logging.WARNING
-
 td_analytics_obj = TD_analytics(td_username, td_password, log_level=td_log_level)
 
 #! ------------ Left Bar ------------

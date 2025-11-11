@@ -17,7 +17,8 @@ from upstox_client.rest import ApiException
 from clickhouse_connect import get_client
 from truedata import TD_live
 from truedata.analytics import TD_analytics
-from config import path_holiday_json
+from config import path_holiday_json, host, port, username, password, database, td_username, td_password, td_log_level
+from helpers import get_clickhouse_conn
 
 #! ------------ Must be the first Streamlit command ------------
 st.set_page_config(page_title="Options Dashboard", layout="wide")
@@ -43,23 +44,14 @@ def load_holidays_ist(path_holiday_json: str | Path | None) -> set[str]:
             return set()
     return set()
 
-def get_clickhouse_conn():
-    return get_client(
-        host="localhost",
-        port=8123,
-        username="ingest_w",
-        password="ingest_secret",
-        database="market"
-    )
-
-def try_connect_clickhouse():
+def try_connect_clickhouse(host, port, username, password, database):
     try:
         conn = get_client(
-            host="localhost",
-            port=8123,
-            username="ingest_w",
-            password="ingest_secret",
-            database="market"
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database
         )
         conn.query("SELECT 1")
         st.session_state["clickhouse_conn"] = conn
@@ -68,18 +60,14 @@ def try_connect_clickhouse():
         st.session_state["clickhouse_conn"] = None
         st.session_state["clickhouse_status"] = f"error: {e}"
 
-def get_td_analytics():
-    USERNAME = "True9030"
-    PASSWORD = "vineet@9030"
-    return TD_analytics(USERNAME, PASSWORD, log_level=logging.WARNING)
 
 #! Show connect button if not connected, or show status
 if "clickhouse_status" not in st.session_state or st.session_state["clickhouse_status"] != "connected":
     if st.button("Connect to ClickHouse", type="primary"):
-        try_connect_clickhouse()
+        try_connect_clickhouse(host, port, username, password, database)
 
 if "td_analytics" not in st.session_state:
-    st.session_state["td_analytics"] = get_td_analytics()
+    st.session_state["td_analytics"] = TD_analytics(td_username, td_password, td_log_level)
 
 #! Show status indicator
 status = st.session_state.get("clickhouse_status", "disconnected")
@@ -91,7 +79,7 @@ else:
     st.info("ClickHouse not connected")
 
 if "clickhouse_conn" not in st.session_state:
-    st.session_state["clickhouse_conn"] = get_clickhouse_conn()
+    st.session_state["clickhouse_conn"] = get_clickhouse_conn(host, port, username, password, database)
 
 
 #! ---------- Futures/Options background collector ----------

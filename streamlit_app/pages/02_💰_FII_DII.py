@@ -1,4 +1,4 @@
-from helpers import *
+from helpers import get_clickhouse_conn, ensure_session_defaults
 import datetime
 from nselib import derivatives
 import plotly.express as px
@@ -12,7 +12,7 @@ from clickhouse_connect import get_client
 from truedata.analytics import TD_analytics
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
+from config import host, port, username, password, database
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -412,16 +412,7 @@ if "clickhouse_conn" not in st.session_state or st.session_state.get("clickhouse
     st.stop()
 
 
-def get_clickhouse_conn():
-    return get_client(
-        host="localhost",
-        port=8123,
-        username="ingest_w",
-        password="ingest_secret",
-        database="market"
-    )
-
-conn = get_clickhouse_conn()
+conn = get_clickhouse_conn(host, port, username, password, database)
 
 #! ================== Sidebar ==================
 with st.sidebar:

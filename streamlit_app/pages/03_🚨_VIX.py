@@ -1,4 +1,4 @@
-from helpers import *
+from helpers import get_clickhouse_conn, ensure_session_defaults, get_strike_step
 import datetime
 from datetime import timezone, timedelta
 import pytz
@@ -11,6 +11,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 import logging
+from config import host, port, username, password, database, td_username, td_password, td_log_level
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -106,7 +107,8 @@ def _fetch_iv_by_expiry_today(conn,SYMBOL,td_analytics_obj):
 
 
 def _compute_vix30(df: pd.DataFrame) -> pd.DataFrame:
-    if df.empty: return df
+    if df.empty: 
+        return df
     today = datetime.datetime.now(IST).date()
     df = df.copy()
     df["t_dt"] = pd.to_datetime(df["time"], format="%H:%M").map(lambda t: datetime.datetime.combine(today, t.time(), tzinfo=IST))
@@ -141,12 +143,12 @@ def _compute_vix30(df: pd.DataFrame) -> pd.DataFrame:
         if vix is not None:
             out.append({"t_dt": t, "time": t.strftime("%H:%M"), "vix30": round(float(vix), 2)})
 
-    print(
-        f"{t:%H:%M} near_iv%={near['iv_avg'].iloc[0]:.2f} "
-        f"near_days={near['days_left'].iloc[0]:.1f}  "
-        f"far_iv%={(far['iv_avg'].iloc[0] if not far.empty else float('nan')):.2f} "
-        f"far_days={(far['days_left'].iloc[0] if not far.empty else float('nan')):.1f}"
-    )
+    # print(
+    #     f"{t:%H:%M} near_iv%={near['iv_avg'].iloc[0]:.2f} "
+    #     f"near_days={near['days_left'].iloc[0]:.1f}  "
+    #     f"far_iv%={(far['iv_avg'].iloc[0] if not far.empty else float('nan')):.2f} "
+    #     f"far_days={(far['days_left'].iloc[0] if not far.empty else float('nan')):.1f}"
+    # )
 
     return pd.DataFrame(out).sort_values("t_dt")
 
@@ -271,22 +273,9 @@ if "clickhouse_conn" not in st.session_state or st.session_state.get("clickhouse
     st.stop()
 
 
-def get_clickhouse_conn():
-    return get_client(
-        host="localhost",
-        port=8123,
-        username="ingest_w",
-        password="ingest_secret",
-        database="market"
-    )
-
-conn = get_clickhouse_conn()
+conn = get_clickhouse_conn(host, port, username, password, database)
 
 #! ================== TrueData Analytics connection ==================
-td_username = "True9030"
-td_password = "vineet@9030"
-td_log_level = logging.WARNING
-
 td_analytics_obj = TD_analytics(td_username, td_password, log_level=td_log_level)
 
 #! ================== Left Bar ==================
@@ -362,6 +351,7 @@ if not SYMBOL:
 rows = _fetch_iv_by_expiry_today(conn, SYMBOL, td_analytics_obj)
 
 if not rows.empty:
+
     vixdf = _compute_vix30(rows)
 
     #! Display 3 tabs ie 
@@ -399,58 +389,3 @@ if not rows.empty:
         st.plotly_chart(fig2, use_container_width=True)
 
 #! ================== VIX Heatmap for All Indices and Stocks ==================
-# st.subheader("Latest VIX Values - All Instruments")
-
-# # Get all available instruments
-# # all_indices = [idx for idx in INDEX_LIST if idx in all_opt_underlyings]
-# # all_stocks = [stock for stock in all_opt_underlyings if stock not in INDEX_LIST]
-# # all_instruments = all_indices + all_stocks
-# all_instruments = ["NIFTY", "BANKNIFTY"]
-
-# if all_instruments:
-#     with st.spinner("Fetching VIX values for all instruments..."):
-#         vix_heatmap_data = get_latest_vix_for_all_instruments(conn, all_instruments, td_analytics_obj)
-
-#     if not vix_heatmap_data.empty:
-#         # Separate indices and stocks
-#         vix_heatmap_data['type'] = vix_heatmap_data['instrument'].apply(
-#             lambda x: 'Index' if x in INDEX_LIST else 'Stock'
-#         )
-        
-#         # Sort by type (Index first) and then by VIX value (descending)
-#         vix_heatmap_data = vix_heatmap_data.sort_values(['type', 'vix30'], ascending=[True, False])
-        
-#         # Create a matrix for heatmap: instruments as rows, single column for VIX
-#         # Better structure: instruments as rows, one column showing VIX values
-#         heatmap_matrix = vix_heatmap_data[['vix30']].T
-#         heatmap_matrix.columns = vix_heatmap_data['instrument'].values
-#         heatmap_matrix.index = ['VIX 30']
-#         st.write(heatmap_matrix)
-
-#         # Create heatmap
-#         fig = px.imshow(
-#             heatmap_matrix,
-#             labels=dict(x="Instrument", y="", color="VIX 30"),
-#             color_continuous_scale='RdYlGn_r',  # Reversed: Red = High VIX, Green = Low VIX
-#             aspect="auto",
-#             title='Latest VIX 30 Values Across All Instruments',
-#             text_auto='.2f'
-#         )
-        
-#         fig.update_layout(
-#             height=150,
-#             xaxis_title="Instrument",
-#             yaxis_title=""
-#         )
-        
-#         # Rotate x-axis labels for better readability
-#         fig.update_xaxes(tickangle=-45)
-        
-#         st.plotly_chart(fig, use_container_width=True)
-#     else:
-#         st.info("No VIX data available for the selected instruments.")
-# else:
-#     st.info("No instruments available to display.")
-
-
-

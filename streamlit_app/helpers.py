@@ -1,6 +1,17 @@
 import streamlit as st
+from clickhouse_connect import get_client
 
-#! ------------ Streamlit Session Defualt ------------
+#! Common Helping Functions
+
+def get_clickhouse_conn(host, port, username, password, database):
+    return get_client(
+        host=host,
+        port=port,
+        username=username,
+        password=password,
+        database=database
+    )
+    
 def ensure_session_defaults():
     ss = st.session_state
     ss.setdefault("universe", "index")       # "index" | "stocks"
