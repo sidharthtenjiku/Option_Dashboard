@@ -32,7 +32,7 @@ def get_strike_step(symbol):
     return 1
 
 
-def _fetch_iv_by_expiry_today(conn,SYMBOL,td_analytics_obj):
+def _fetch_iv_by_expiry_today(conn,SYMBOL,td_analytics_obj,td_username,td_password,td_log_level):
 
     today = datetime.date.today().isoformat()
 
@@ -70,7 +70,11 @@ def _fetch_iv_by_expiry_today(conn,SYMBOL,td_analytics_obj):
         expiry_map = {near_expiry: 'near'}
 
     #! 3. Get spot LTP and strike step for ATM calculation
-    ul_ltp = float(td_analytics_obj.get_spot_ltp(SYMBOL).LTP.iloc[0])
+    try:
+        ul_ltp = float(td_analytics_obj.get_spot_ltp(SYMBOL).LTP.iloc[0])
+    except Exception as e:
+        td_analytics_obj = TD_analytics(td_username, td_password, td_log_level)
+        ul_ltp = float(td_analytics_obj.get_spot_ltp(SYMBOL).LTP.iloc[0])
     strike_step = get_strike_step(SYMBOL)
 
     #! 4. For each expiry, for each minute, get ATM strike and IVs
@@ -174,7 +178,7 @@ def fetch_vix_for_indices(conn, indices, interval_min, td_analytics_obj):
     all_vixdfs = []  # to store vix dataframes for each index
 
     for index in indices:
-        rows = _fetch_iv_by_expiry_today(conn, index, td_analytics_obj)
+        rows = _fetch_iv_by_expiry_today(conn, index, td_analytics_obj, td_username, td_password, td_log_level)
         if not rows.empty:
             vixdf = _compute_vix30(rows)
             vixdf = _resample_vixdf(vixdf, interval_min)
@@ -242,7 +246,7 @@ def get_latest_vix_for_all_instruments(conn, all_instruments, td_analytics_obj):
     
     for instrument in all_instruments:
         try:
-            rows = _fetch_iv_by_expiry_today(conn, instrument, td_analytics_obj)
+            rows = _fetch_iv_by_expiry_today(conn, instrument, td_analytics_obj, td_username, td_password, td_log_level)
             if not rows.empty:
                 vixdf = _compute_vix30(rows)
                 if not vixdf.empty:
@@ -276,7 +280,7 @@ if "clickhouse_conn" not in st.session_state or st.session_state.get("clickhouse
 conn = get_clickhouse_conn(host, port, username, password, database)
 
 #! ================== TrueData Analytics connection ==================
-td_analytics_obj = TD_analytics(td_username, td_password, log_level=td_log_level)
+td_analytics_obj = TD_analytics(td_username, td_password, td_log_level)
 
 #! ================== Left Bar ==================
 
@@ -348,7 +352,7 @@ if not SYMBOL:
     st.stop()
 
 #! ================== VIX ==================
-rows = _fetch_iv_by_expiry_today(conn, SYMBOL, td_analytics_obj)
+rows = _fetch_iv_by_expiry_today(conn, SYMBOL, td_analytics_obj, td_username, td_password, td_log_level)
 
 if not rows.empty:
 
